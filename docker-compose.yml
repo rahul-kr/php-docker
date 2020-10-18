@@ -1,0 +1,53 @@
+version: "2.1"
+
+services:
+  eshopMysql:
+    image: mysql:5.7
+    container_name: eshopMysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    env_file: ./conf/.env
+    ports:
+     - 3308:3306
+    volumes:
+      - ./db-data:/var/lib/mysql
+    networks:
+      - internal
+
+  eshop:
+    image: eshop
+    build: ./conf
+    container_name: eshop
+    depends_on:
+      - eshopMysql
+    restart: unless-stopped
+    networks:
+      - internal
+      - external
+    volumes:
+      - .:/var/www
+
+  eshopNginxWeb:
+    image: nginx:1.17.4-alpine
+    container_name: eshopNginxWeb
+    depends_on:
+      - eshop
+    restart: unless-stopped
+    ports:
+      - 8072:80
+    volumes:
+      - .:/var/www
+      - ./conf/nginx-conf:/etc/nginx/conf.d
+    networks:
+      - external
+
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
+
+volumes:
+  drupal-data:
+  db-data:
+    
